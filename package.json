@@ -1,0 +1,46 @@
+{
+  "name": "@scala-js/vite-plugin-scalajs",
+  "version": "1.0.0",
+  "description": "Vite plugin for integration of Scala.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scala-js/vite-plugin-scalajs.git"
+  },
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "scala",
+    "scala-js"
+  ],
+  "contributors": [
+    {
+      "name": "Sébastien Doeraene",
+      "url": "https://github.com/sjrd"
+    },
+    {
+      "name": "Tobias Schlatter",
+      "url": "https://github.com/gzm0"
+    }
+  ],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/scala-js/vite-plugin-scalajs/issues"
+  },
+  "homepage": "https://github.com/scala-js/vite-plugin-scalajs#readme",
+  "devDependencies": {
+    "@types/node": "^18.14.2",
+    "typescript": "4.9.5",
+    "vitest": "^0.29.2"
+  },
+  "dependencies": {
+    "vite": "^4.1.4"
+  },
+  "type": "module",
+  "files": ["dist", "LICENSE", "README.md", "package.json"]
+}
