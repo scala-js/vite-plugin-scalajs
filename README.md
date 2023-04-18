@@ -5,7 +5,7 @@ A [Vite](https://vitejs.dev/) plugin for [Scala.js](https://www.scala-js.org/).
 ## Usage
 
 We assume that you have an existing Vite and Scala.js sbt project.
-If not, [follow the accompanying tutorial](https://github.com/scala-js/scala-js-website/pull/590).
+If not, [follow the accompanying tutorial](https://www.scala-js.org/doc/tutorial/scalajs-vite.html).
 
 Install the plugin as a development dependency:
 
@@ -43,6 +43,13 @@ scalaJSLinkerConfig ~= {
       ModuleSplitStyle.SmallModulesFor(List("my.app")))
 },
 ```
+
+In development mode, use two terminals in parallel:
+
+* One with `$ npm run dev`.
+* One with `$ sbt '~fastLinkJS'` (or a more precise version such as `$ sbt '~theJSProject/fastLinkJS`).
+
+For the production build, `$ npm run build` is enough.
 
 ## Configuration
 
