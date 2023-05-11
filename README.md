@@ -70,6 +70,10 @@ export default defineConfig({
       // URI prefix of imports that this plugin catches (without the trailing ':')
       // default: 'scalajs' (so the plugin recognizes URIs starting with 'scalajs:')
       uriPrefix: 'scalajs',
+
+      // SBT launcher executable to use, 'sbt' by default on Linux, 'sbt.bat' on Windows
+      // Set to 'sbtn' to use the sbt server for quicker vite startup
+      launcher: 'sbtn',
     }),
   ],
 });
