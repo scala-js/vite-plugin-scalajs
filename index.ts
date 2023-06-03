@@ -2,15 +2,15 @@ import { spawn, SpawnOptions } from "child_process";
 import type { Plugin as VitePlugin } from "vite";
 
 // Utility to invoke a given sbt task and fetch its output
-function printSbtTask(task: string, cwd?: string): Promise<string> {
+function printSbtTask(task: string, cwd?: string, launcher?: string): Promise<string> {
   const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
   const options: SpawnOptions = {
     cwd: cwd,
     stdio: ['ignore', 'pipe', 'inherit'],
   };
   const child = process.platform === 'win32'
-    ? spawn("sbt.bat", args.map(x => `"${x}"`), {shell: true, ...options})
-    : spawn("sbt", args, options);
+    ? spawn(launcher || "sbt.bat", args.map(x => `"${x}"`), { shell: true, ...options })
+    : spawn(launcher || "sbt", args, options);
 
   let fullOutput: string = '';
 
@@ -27,8 +27,19 @@ function printSbtTask(task: string, cwd?: string): Promise<string> {
     child.on('close', code => {
       if (code !== 0)
         reject(new Error(`sbt invocation for Scala.js compilation failed with exit code ${code}.`));
-      else
-        resolve(fullOutput.trimEnd().split('\n').at(-1)!);
+      else {
+        // SBTN does send ANSI escape codes even with -no-color, and adds extra log message at the end
+        const p = fullOutput
+          .trimEnd()
+          // Remove the clear screen escape code
+          .replace(/\u001b\[\d+J/g, '')
+          .split('\n')
+          // Filter empty lines and the extra log message (starting with [)
+          .filter(line => !/^($|\x1b?\[)/.test(line))
+          // Last line
+          .at(-1)
+        resolve(p || '');
+      }
     });
   });
 }
@@ -37,10 +48,11 @@ export interface ScalaJSPluginOptions {
   cwd?: string,
   projectID?: string,
   uriPrefix?: string,
+  launcher?: string,
 }
 
 export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): VitePlugin {
-  const { cwd, projectID, uriPrefix } = options;
+  const { cwd, projectID, uriPrefix, launcher } = options;
 
   const fullURIPrefix = uriPrefix ? (uriPrefix + ':') : 'scalajs:';
 
@@ -62,7 +74,7 @@ export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): ViteP
 
       const task = isDev ? "fastLinkJSOutput" : "fullLinkJSOutput";
       const projectTask = projectID ? `${projectID}/${task}` : task;
-      scalaJSOutputDir = await printSbtTask(projectTask, cwd);
+      scalaJSOutputDir = await printSbtTask(projectTask, cwd, launcher);
     },
 
     // standard Rollup
