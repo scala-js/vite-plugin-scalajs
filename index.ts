@@ -29,8 +29,16 @@ function printSbtTask(task: string, cwd?: string, launcher?: string): Promise<st
         reject(new Error(`sbt invocation for Scala.js compilation failed with exit code ${code}.`));
       else {
         // SBTN does send ANSI escape codes even with -no-color, and adds extra log message at the end
-        // Filter out all lines that start with an escape code and logs (starting with [), take last line
-        resolve(fullOutput.trimEnd().split('\n').filter(line => !/^\x1b?\[/.test(line)).at(-1)!)
+        const p = fullOutput
+          .trimEnd()
+          // Remove the clear screen escape code
+          .replace(/\u001b\[\d+J/g, '')
+          .split('\n')
+          // Filter empty lines and the extra log message (starting with [)
+          .filter(line => !/^($|\x1b?\[)/.test(line))
+          // Last line
+          .at(-1)
+        resolve(p || '');
       }
     });
   });
