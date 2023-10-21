@@ -18,6 +18,23 @@ function normalizeSlashes(path: string | null): string | null {
   return path === null ? null : path.replace(/\\/g, '/');
 }
 
+function testBothModes(
+  testFunction: (d: string, func: () => Promise<void>, options: TestOptions) => void,
+  description: string,
+  f: (mode: string, suffix: string) => Promise<void>,
+  testOptions: TestOptions,
+) {
+  testFunction ||= it
+  const MODES = [["production", MODE_PRODUCTION, "opt"], ["development", MODE_DEVELOPMENT, "fastopt"]]
+  MODES.forEach( ([modeName, mode, suffix]) => {
+    testFunction(
+      description + "(" + modeName + ")",
+      async () => await f(mode, suffix),
+      testOptions,
+    )
+  })
+}
+
 const MODE_DEVELOPMENT = 'development';
 const MODE_PRODUCTION = 'production';
 
@@ -101,6 +118,77 @@ describe("scalaJSPlugin", () => {
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js'))
       .toBeNull();
   }, testOptions);
+
+  testBothModes(it, "works with a project with subprojects", async (mode, suffix) => {
+    const [plugin, fakePluginContext] = setup({
+      subprojects: [
+        {
+          projectID: "otherProject",
+          uriPrefix: "foo",
+        },
+        {
+          projectID: null,
+          uriPrefix: "bar",
+        },
+      ]
+    });
+
+    await plugin.configResolved.call(undefined, { mode: mode });
+    await plugin.buildStart.call(fakePluginContext, {});
+
+    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'foo:main.js')))
+      .toContain('/testproject/other-project/target/scala-3.2.2/otherproject-' + suffix + '/main.js');
+    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'bar:main.js')))
+      .toContain('/testproject/target/scala-3.2.2/testproject-' + suffix + '/main.js');
+
+    expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
+      .toBeNull();
+  }, testOptions);
+
+  it.fails("with duplicate projectID", async () => {
+    setup({
+      subprojects: [
+        {
+          projectID: "otherProject",
+          uriPrefix: "foo",
+        },
+        {
+          projectID: "otherProject",
+          uriPrefix: "bar",
+        },
+      ]
+    });
+  });
+
+  it.fails("with duplicate uriPrefix", async () => {
+    setup({
+      subprojects: [
+        {
+          projectID: "otherProject",
+          uriPrefix: "foo",
+        },
+        {
+          projectID: null,
+          uriPrefix: "foo",
+        },
+      ]
+    });
+  });
+
+  it.fails("when both projectID and subproojects are specified", async () => {
+    setup({
+      projectID: "xxx",
+      subprojects: []
+    });
+  });
+
+  it.fails("when both uriPrefix and subproojects are specified", async () => {
+    setup({
+      uriPrefix: "xxx",
+      subprojects: []
+    });
+  });
+
 
   it("does not work with a project that does not link", async () => {
     const [plugin, fakePluginContext] = setup({
