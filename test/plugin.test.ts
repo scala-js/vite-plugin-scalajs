@@ -27,7 +27,7 @@ function testBothModes(
   const MODES = [["production", MODE_PRODUCTION, "opt"], ["development", MODE_DEVELOPMENT, "fastopt"]];
   MODES.forEach( ([modeName, mode, suffix]) => {
     testFunction(
-      description + "(" + modeName + ")",
+      description + " (" + modeName + ")",
       async () => await f(mode, suffix),
       testOptions,
     );
