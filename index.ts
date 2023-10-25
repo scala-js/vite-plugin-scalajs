@@ -2,8 +2,8 @@ import { spawn, SpawnOptions } from "child_process";
 import type { Plugin as VitePlugin } from "vite";
 
 // Utility to invoke a given sbt task and fetch its output
-function printSbtTask(task: string, cwd?: string): Promise<string> {
-  const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
+function printSbtTasks(tasks: Array<string>, cwd?: string): Promise<Array<string>> {
+  const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", ...tasks.map(task => `print ${task}`)];
   const options: SpawnOptions = {
     cwd: cwd,
     stdio: ['ignore', 'pipe', 'inherit'],
@@ -28,24 +28,71 @@ function printSbtTask(task: string, cwd?: string): Promise<string> {
       if (code !== 0)
         reject(new Error(`sbt invocation for Scala.js compilation failed with exit code ${code}.`));
       else
-        resolve(fullOutput.trimEnd().split('\n').at(-1)!);
+        resolve(fullOutput.trimEnd().split('\n').slice(-tasks.length));
     });
   });
+}
+
+export interface Subproject {
+  projectID: string | null,
+  uriPrefix: string,
 }
 
 export interface ScalaJSPluginOptions {
   cwd?: string,
   projectID?: string,
   uriPrefix?: string,
+  subprojects?: Array<Subproject>,
+}
+
+function extractSubprojects(options: ScalaJSPluginOptions): Array<Subproject> {
+  if (options.subprojects) {
+    if (options.projectID || options.uriPrefix) {
+      throw new Error("If you specify subprojects, you cannot specify projectID / uriPrefix");
+    }
+    if (options.subprojects.length == 0) {
+      throw new Error("If you specify subprojects, they shall not be empty.");
+    }
+    return options.subprojects;
+  } else {
+    return [
+      {
+        projectID: options.projectID || null,
+        uriPrefix: options.uriPrefix || 'scalajs',
+      }
+    ];
+  }
+}
+
+function mapBy<T, K>(a: Array<T>, f: ((item: T) => K), itemName: string): Map<K, T> {
+  const out = new Map<K, T>();
+  a.forEach((item) => {
+    const key: K = f(item);
+    if (out.has(key)) {
+      throw Error("Duplicate " + itemName + " " + key + ".");
+    } else {
+      out.set(key, item);
+    }
+  });
+  return out;
+}
+
+function zip<T, U>(a: Array<T>, b: Array<U>): Array<[T, U]> {
+  if (a.length != b.length) {
+    throw new Error("length mismatch: " + a.length + " ~= " + b.length);
+  }
+  return a.map((item, i) => [item, b[i]]);
 }
 
 export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): VitePlugin {
-  const { cwd, projectID, uriPrefix } = options;
-
-  const fullURIPrefix = uriPrefix ? (uriPrefix + ':') : 'scalajs:';
+  const { cwd } = options;
+  const subprojects = extractSubprojects(options);
+  // This also checks for duplicates
+  const spByProjectID = mapBy(subprojects, (p) => p.projectID, "projectID");
+  const spByUriPrefix = mapBy(subprojects, (p) => p.uriPrefix, "uriPrefix");
 
   let isDev: boolean | undefined = undefined;
-  let scalaJSOutputDir: string | undefined = undefined;
+  let scalaJSOutputDirs: Map<string, string> | undefined = undefined;
 
   return {
     name: "scalajs:sbt-scalajs-plugin",
@@ -61,20 +108,31 @@ export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): ViteP
         throw new Error("configResolved must be called before buildStart");
 
       const task = isDev ? "fastLinkJSOutput" : "fullLinkJSOutput";
-      const projectTask = projectID ? `${projectID}/${task}` : task;
-      scalaJSOutputDir = await printSbtTask(projectTask, cwd);
+      const projectTasks = subprojects.map( p =>
+        p.projectID ? `${p.projectID}/${task}` : task
+      );
+      const scalaJSOutputDirsArray = await printSbtTasks(projectTasks, cwd);
+      scalaJSOutputDirs = new Map(zip(
+        subprojects.map(p => p.uriPrefix),
+        scalaJSOutputDirsArray
+      ));
     },
 
     // standard Rollup
     resolveId(source, importer, options) {
-      if (scalaJSOutputDir === undefined)
+      if (scalaJSOutputDirs === undefined)
         throw new Error("buildStart must be called before resolveId");
-
-      if (!source.startsWith(fullURIPrefix))
+      const colonPos = source.indexOf(':');
+      if (colonPos == -1) {
         return null;
-      const path = source.substring(fullURIPrefix.length);
+      }
+      const subprojectUriPrefix = source.substr(0, colonPos);
+      const outDir = scalaJSOutputDirs.get(subprojectUriPrefix)
+      if (outDir == null)
+        return null;
+      const path = source.substring(subprojectUriPrefix.length + 1);
 
-      return `${scalaJSOutputDir}/${path}`;
+      return `${outDir}/${path}`;
     },
   };
 }
