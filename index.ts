@@ -48,7 +48,10 @@ export interface ScalaJSPluginOptions {
 function extractSubprojects(options: ScalaJSPluginOptions): Array<Subproject> {
   if (options.subprojects) {
     if (options.projectID || options.uriPrefix) {
-      throw new Error("If you specify subprojects, you cannot specify projectID / uriPrefix")
+      throw new Error("If you specify subprojects, you cannot specify projectID / uriPrefix");
+    }
+    if (options.subprojects.length == 0) {
+      throw new Error("If you specify subprojects, they shall not be empty.");
     }
     return options.subprojects;
   } else {
@@ -76,7 +79,7 @@ function mapBy<T, K>(a: Array<T>, f: ((item: T) => K), itemName: string): Map<K,
 
 function zip<T, U>(a: Array<T>, b: Array<U>): Array<[T, U]> {
   if (a.length != b.length) {
-    throw new Error("length mismatch: " + a.length + " ~= " + b.length)
+    throw new Error("length mismatch: " + a.length + " ~= " + b.length);
   }
   return a.map((item, i) => [item, b[i]]);
 }
@@ -85,8 +88,8 @@ export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): ViteP
   const { cwd } = options;
   const subprojects = extractSubprojects(options);
   // This also checks for duplicates
-  const spByProjectID = mapBy(subprojects, (p) => p.projectID, "projectID")
-  const spByUriPrefix = mapBy(subprojects, (p) => p.uriPrefix, "uriPrefix")
+  const spByProjectID = mapBy(subprojects, (p) => p.projectID, "projectID");
+  const spByUriPrefix = mapBy(subprojects, (p) => p.uriPrefix, "uriPrefix");
 
   let isDev: boolean | undefined = undefined;
   let scalaJSOutputDirs: Map<string, string> | undefined = undefined;
@@ -112,7 +115,7 @@ export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): ViteP
       scalaJSOutputDirs = new Map(zip(
         subprojects.map(p => p.uriPrefix),
         scalaJSOutputDirsArray
-      ))
+      ));
     },
 
     // standard Rollup

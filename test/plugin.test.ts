@@ -24,15 +24,14 @@ function testBothModes(
   f: (mode: string, suffix: string) => Promise<void>,
   testOptions: TestOptions,
 ) {
-  testFunction ||= it
-  const MODES = [["production", MODE_PRODUCTION, "opt"], ["development", MODE_DEVELOPMENT, "fastopt"]]
+  const MODES = [["production", MODE_PRODUCTION, "opt"], ["development", MODE_DEVELOPMENT, "fastopt"]];
   MODES.forEach( ([modeName, mode, suffix]) => {
     testFunction(
       description + "(" + modeName + ")",
       async () => await f(mode, suffix),
       testOptions,
-    )
-  })
+    );
+  });
 }
 
 const MODE_DEVELOPMENT = 'development';
@@ -130,7 +129,7 @@ describe("scalaJSPlugin", () => {
           projectID: null,
           uriPrefix: "bar",
         },
-      ]
+      ],
     });
 
     await plugin.configResolved.call(undefined, { mode: mode });
@@ -141,7 +140,7 @@ describe("scalaJSPlugin", () => {
     expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'bar:main.js')))
       .toContain('/testproject/target/scala-3.2.2/testproject-' + suffix + '/main.js');
 
-    expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
+    expect(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js'))
       .toBeNull();
   }, testOptions);
 
@@ -156,7 +155,7 @@ describe("scalaJSPlugin", () => {
           projectID: "otherProject",
           uriPrefix: "bar",
         },
-      ]
+      ],
     });
   });
 
@@ -171,24 +170,39 @@ describe("scalaJSPlugin", () => {
           projectID: null,
           uriPrefix: "foo",
         },
-      ]
+      ],
     });
   });
 
-  it.fails("when both projectID and subproojects are specified", async () => {
+  it.fails("when both projectID and subprojects are specified", async () => {
     setup({
       projectID: "xxx",
-      subprojects: []
+      subprojects: [
+        {
+          projectID: null,
+          uriPrefix: "foo",
+        },
+      ],
     });
   });
 
-  it.fails("when both uriPrefix and subproojects are specified", async () => {
+  it.fails("when both uriPrefix and subprojects are specified", async () => {
     setup({
       uriPrefix: "xxx",
-      subprojects: []
+      subprojects: [
+        {
+          projectID: null,
+          uriPrefix: "foo",
+        },
+      ],
     });
   });
 
+  it.fails("when empty subprojects are specified", async () => {
+    setup({
+      subprojects: [],
+    });
+  });
 
   it("does not work with a project that does not link", async () => {
     const [plugin, fakePluginContext] = setup({
