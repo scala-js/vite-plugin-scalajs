@@ -25,10 +25,16 @@ function printSbtTask(task: string, cwd?: string): Promise<string> {
       reject(new Error(`sbt invocation for Scala.js compilation could not start. Is it installed?\n${err}`));
     });
     child.on('close', code => {
-      if (code !== 0)
-        reject(new Error(`sbt invocation for Scala.js compilation failed with exit code ${code}.`));
-      else
+      if (code !== 0) {
+        let errorMessage = `sbt invocation for Scala.js compilation failed with exit code ${code}.`;
+        if (fullOutput.includes("Not a valid command: --")) {
+          errorMessage += "\nCause: Your sbt launcher script version is too old (<1.3.3)."
+          errorMessage += "\nFix: Re-install the latest version of sbt launcher script from https://www.scala-sbt.org/"
+        }
+        reject(new Error(errorMessage));
+      } else {
         resolve(fullOutput.trimEnd().split('\n').at(-1)!);
+      }
     });
   });
 }
