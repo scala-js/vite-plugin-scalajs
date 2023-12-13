@@ -40,7 +40,9 @@ function printSbtTask(task: string, cwd?: string): Promise<string> {
         const parsableDir = withoutLog.filter(line =>
             path.parse(line).dir.length > 0
         );
-        resolve(parsableDir.at(-1)!);
+        parsableDir.length > 0
+            ? resolve(parsableDir.at(-1)!)
+            : reject(new Error(`Couldn't find a valid path in sbt output: ${fullOutput}`));
       }
     });
   });
