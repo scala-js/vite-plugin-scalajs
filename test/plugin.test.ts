@@ -52,7 +52,10 @@ describe("scalaJSPlugin", () => {
     await plugin.configResolved.call(undefined, { mode: MODE_PRODUCTION });
     await plugin.buildStart.call(fakePluginContext, {});
 
-    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')))
+    const path = await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js');
+    const normalized = normalizeSlashes(path);
+
+    expect(normalized)
       .toContain('/testproject/target/scala-3.2.2/testproject-opt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
@@ -65,7 +68,10 @@ describe("scalaJSPlugin", () => {
     await plugin.configResolved.call(undefined, { mode: MODE_DEVELOPMENT });
     await plugin.buildStart.call(fakePluginContext, {});
 
-    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')))
+    const path = await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js');
+    const normalized = normalizeSlashes(path);
+
+    expect(normalized)
       .toContain('/testproject/target/scala-3.2.2/testproject-fastopt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
@@ -80,7 +86,10 @@ describe("scalaJSPlugin", () => {
     await plugin.configResolved.call(undefined, { mode: MODE_PRODUCTION });
     await plugin.buildStart.call(fakePluginContext, {});
 
-    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')))
+    const path = await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js');
+    const normalized = normalizeSlashes(path);
+
+    expect(normalized)
       .toContain('/testproject/other-project/target/scala-3.2.2/otherproject-opt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
@@ -95,7 +104,10 @@ describe("scalaJSPlugin", () => {
     await plugin.configResolved.call(undefined, { mode: MODE_DEVELOPMENT });
     await plugin.buildStart.call(fakePluginContext, {});
 
-    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'customsjs:main.js')))
+    const path = await plugin.resolveId.call(fakePluginContext, 'customsjs:main.js');
+    const normalized = normalizeSlashes(path);
+
+    expect(normalized)
       .toContain('/testproject/target/scala-3.2.2/testproject-fastopt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js'))
