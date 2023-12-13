@@ -1,0 +1,3 @@
+-Dsbt.task.timings=true
+-Dsbt.task.timings.unit=s
+-Dsbt.task.timings.on.shutdown=true
