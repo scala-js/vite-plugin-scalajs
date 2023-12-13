@@ -1,5 +1,6 @@
 import { spawn, SpawnOptions } from "child_process";
 import type { Plugin as VitePlugin } from "vite";
+import path from "path";
 
 // Utility to invoke a given sbt task and fetch its output
 function printSbtTask(task: string, cwd?: string): Promise<string> {
@@ -33,7 +34,13 @@ function printSbtTask(task: string, cwd?: string): Promise<string> {
         }
         reject(new Error(errorMessage));
       } else {
-        resolve(fullOutput.trimEnd().split('\n').at(-1)!);
+        const separator = process.platform === 'win32' ? '\r\n' : '\n';
+        const lines = fullOutput.trimEnd().split(separator);
+        const withoutLog = lines.filter(line => !line.startsWith('['));
+        const parsableDir = withoutLog.filter(line =>
+            path.parse(line).dir.length > 0
+        );
+        resolve(parsableDir.at(-1)!);
       }
     });
   });
