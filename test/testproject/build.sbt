@@ -11,6 +11,11 @@ lazy val otherProject = project.in(file("other-project"))
   .enablePlugins(ScalaJSPlugin)
   .settings(commonSettings)
 
+lazy val aggregatedProject = project.in(file("aggregated-project"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(commonSettings)
+  .aggregate(otherProject)
+
 // This project does not link because it has no main method
 lazy val invalidProject = project.in(file("invalid-project"))
   .enablePlugins(ScalaJSPlugin)

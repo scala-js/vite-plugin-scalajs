@@ -87,6 +87,48 @@ describe("scalaJSPlugin", () => {
       .toBeNull();
   }, testOptions);
 
+  it("works with a project that aggregates other ScalaJS enabled projects) (development)", async () => {
+    const [plugin, fakePluginContext] = setup({
+      projectID: "aggregatedProject",
+    });
+
+    await plugin.configResolved.call(undefined, { mode: MODE_DEVELOPMENT });
+    await plugin.buildStart.call(fakePluginContext, {});
+
+    const path = normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')) ;
+
+    expect(path)
+      .toContain('/testproject/aggregated-project/target/scala-3.2.2/aggregatedproject-fastopt/main.js');
+
+    expect(path)
+      .toMatch(/^[^ \t]/); // Should not start with whitespace
+
+    expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
+      .toBeNull();
+  }, testOptions);
+
+  it("works with a project that aggregates other ScalaJS enabled projects) (production)", async () => {
+    const [plugin, fakePluginContext] = setup({
+      projectID: "aggregatedProject",
+    });
+
+    await plugin.configResolved.call(undefined, { mode: MODE_PRODUCTION });
+    await plugin.buildStart.call(fakePluginContext, {});
+
+    const path = normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')) ;
+
+    console.log("Found path: " + path);
+
+    expect(path)
+      .toContain('/testproject/aggregated-project/target/scala-3.2.2/aggregatedproject-opt/main.js');
+
+    expect(path)
+      .toMatch(/^[^ \t]/); // Should not start with whitespace
+
+    expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
+      .toBeNull();
+  }, testOptions);
+
   it("works with a custom URI prefix (development)", async () => {
     const [plugin, fakePluginContext] = setup({
       uriPrefix: "customsjs",
