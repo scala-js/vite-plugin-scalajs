@@ -3,7 +3,7 @@ import type { Plugin as VitePlugin } from "vite";
 
 // Utility to invoke a given sbt task and fetch its output
 function printSbtTask(task: string, cwd?: string): Promise<string> {
-  const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
+  const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", `set ${task} / aggregate := false; print ${task}`];
   const options: SpawnOptions = {
     cwd: cwd,
     stdio: ['ignore', 'pipe', 'inherit'],
