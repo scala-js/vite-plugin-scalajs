@@ -53,7 +53,7 @@ describe("scalaJSPlugin", () => {
     await plugin.buildStart.call(fakePluginContext, {});
 
     expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')))
-      .toContain('/testproject/target/scala-3.2.2/testproject-opt/main.js');
+      .toContain('/testproject/target/scala-3.3.3/testproject-opt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
       .toBeNull();
@@ -66,7 +66,7 @@ describe("scalaJSPlugin", () => {
     await plugin.buildStart.call(fakePluginContext, {});
 
     expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')))
-      .toContain('/testproject/target/scala-3.2.2/testproject-fastopt/main.js');
+      .toContain('/testproject/target/scala-3.3.3/testproject-fastopt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
       .toBeNull();
@@ -81,7 +81,7 @@ describe("scalaJSPlugin", () => {
     await plugin.buildStart.call(fakePluginContext, {});
 
     expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js')))
-      .toContain('/testproject/other-project/target/scala-3.2.2/otherproject-opt/main.js');
+      .toContain('/testproject/other-project/target/scala-3.3.3/otherproject-opt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
       .toBeNull();
@@ -95,8 +95,12 @@ describe("scalaJSPlugin", () => {
     await plugin.configResolved.call(undefined, { mode: MODE_DEVELOPMENT });
     await plugin.buildStart.call(fakePluginContext, {});
 
-    expect(normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'customsjs:main.js')))
-      .toContain('/testproject/target/scala-3.2.2/testproject-fastopt/main.js');
+    const result = normalizeSlashes(await plugin.resolveId.call(fakePluginContext, 'customsjs:main.js'))
+
+    console.log(result);
+
+    expect(result)
+      .toContain('/testproject/target/scala-3.3.3/testproject-fastopt/main.js');
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js'))
       .toBeNull();
