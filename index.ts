@@ -51,7 +51,20 @@ export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): ViteP
   const fullURIPrefix = uriPrefix ? (uriPrefix + ':') : 'scalajs:';
 
   let isDev: boolean | undefined = undefined;
-  let scalaJSOutputDir: string | undefined = undefined;
+
+  let scalaJSOutputDirPromise: Promise<string> | undefined = undefined;
+
+  function getScalaJSOutputDir() {
+    if (scalaJSOutputDirPromise === undefined) {
+      if (isDev === undefined) {
+        throw new Error("configResolved must be called before attempting to resolve Scala.js output directory");
+      }
+      const task = isDev ? "fastLinkJSOutput" : "fullLinkJSOutput";
+      const projectTask = projectID ? `${projectID}/${task}` : task;
+      scalaJSOutputDirPromise = printSbtTask(projectTask, cwd);
+    }
+    return scalaJSOutputDirPromise;
+  }
 
   return {
     name: "scalajs:sbt-scalajs-plugin",
@@ -62,19 +75,13 @@ export default function scalaJSPlugin(options: ScalaJSPluginOptions = {}): ViteP
     },
 
     // standard Rollup
-    async buildStart(options) {
-      if (isDev === undefined)
-        throw new Error("configResolved must be called before buildStart");
-
-      const task = isDev ? "fastLinkJSOutput" : "fullLinkJSOutput";
-      const projectTask = projectID ? `${projectID}/${task}` : task;
-      scalaJSOutputDir = await printSbtTask(projectTask, cwd);
+    buildStart(options) {
+      getScalaJSOutputDir();
     },
 
     // standard Rollup
-    resolveId(source, importer, options) {
-      if (scalaJSOutputDir === undefined)
-        throw new Error("buildStart must be called before resolveId");
+    async resolveId(source, importer, options) {
+      const scalaJSOutputDir = await getScalaJSOutputDir()
 
       if (!source.startsWith(fullURIPrefix))
         return null;
