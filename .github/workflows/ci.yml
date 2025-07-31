@@ -11,26 +11,35 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node-version: ['16']
-        java: ['8']
+        node-version: ['22']
+        java: ['17']
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java }}
         cache: 'sbt'
 
+    - name: Add SBT Options
+      run: |
+        mkdir -p ~/.config/sbt
+        echo --allow-empty > ~/.config/sbt/sbtopts
+
+    - uses: sbt/setup-sbt@v1
+      with:
+        sbt-runner-version: 1.8.0
+
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           **/node_modules
