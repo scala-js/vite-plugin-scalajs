@@ -46,7 +46,7 @@ describe("scalaJSPlugin", () => {
     });
   });
 
-  it("works without a specific projectID (production)", async () => {
+  it("works without a specific projectID (production)", testOptions, async () => {
     const [plugin, fakePluginContext] = setup({});
 
     await plugin.configResolved.call(undefined, { mode: MODE_PRODUCTION });
@@ -57,9 +57,9 @@ describe("scalaJSPlugin", () => {
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
       .toBeNull();
-  }, testOptions);
+  });
 
-  it("works without a specific projectID (development)", async () => {
+  it("works without a specific projectID (development)", testOptions, async () => {
     const [plugin, fakePluginContext] = setup({});
 
     await plugin.configResolved.call(undefined, { mode: MODE_DEVELOPMENT });
@@ -70,9 +70,9 @@ describe("scalaJSPlugin", () => {
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
       .toBeNull();
-  }, testOptions);
+  });
 
-  it("works with a specific projectID (production)", async () => {
+  it("works with a specific projectID (production)", testOptions, async () => {
     const [plugin, fakePluginContext] = setup({
       projectID: "otherProject",
     });
@@ -85,9 +85,9 @@ describe("scalaJSPlugin", () => {
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs/main.js'))
       .toBeNull();
-  }, testOptions);
+  });
 
-  it("works with a custom URI prefix (development)", async () => {
+  it("works with a custom URI prefix (development)", testOptions, async () => {
     const [plugin, fakePluginContext] = setup({
       uriPrefix: "customsjs",
     });
@@ -100,9 +100,9 @@ describe("scalaJSPlugin", () => {
 
     expect(await plugin.resolveId.call(fakePluginContext, 'scalajs:main.js'))
       .toBeNull();
-  }, testOptions);
+  });
 
-  it("does not work with a project that does not link", async () => {
+  it("does not work with a project that does not link", testOptions, async () => {
     const [plugin, fakePluginContext] = setup({
       projectID: "invalidProject",
     });
@@ -110,6 +110,6 @@ describe("scalaJSPlugin", () => {
     await plugin.configResolved.call(undefined, { mode: MODE_PRODUCTION });
 
     const buildStartResult = plugin.buildStart.call(fakePluginContext, {});
-    expect(buildStartResult).rejects.toContain('sbt invocation');
-  }, testOptions);
+    await expect(buildStartResult).rejects.toThrowError('sbt invocation');
+  });
 });
