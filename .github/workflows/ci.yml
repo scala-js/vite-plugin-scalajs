@@ -13,6 +13,12 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node-version: ['18']
         java: ['8']
+        vite-version: ['4', '5', '6']
+        include:
+          - os: ubuntu-latest
+            node-version: '20'
+            java: '8'
+            vite-version: '7'
 
     runs-on: ${{ matrix.os }}
 
@@ -35,8 +41,8 @@ jobs:
           **/node_modules
         key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-    - name: Install dependencies
-      run: npm install
+    - name: Install dependencies with Vite ${{ matrix.vite-version }}
+      run: npm install -D @types/node@${{ matrix.node-version }} && npm install vite@${{ matrix.vite-version }}
     - name: Run sbt once in the test project to make sure sbt is downloaded
       run: sbt projects
       working-directory: ./test/testproject
