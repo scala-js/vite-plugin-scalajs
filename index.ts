@@ -1,5 +1,6 @@
 import { spawn, SpawnOptions } from "child_process";
 import type { Plugin as VitePlugin } from "vite";
+import fs from "fs";
 
 // Utility to invoke a given sbt task and fetch its output
 function printSbtTask(task: string, cwd?: string): Promise<string> {
@@ -33,7 +34,13 @@ function printSbtTask(task: string, cwd?: string): Promise<string> {
         }
         reject(new Error(errorMessage));
       } else {
-        resolve(fullOutput.trimEnd().split('\n').at(-1)!);
+        const separator = process.platform === 'win32' ? '\r\n' : '\n';
+        const lines = fullOutput.trimEnd().split(separator);
+        const withoutLog = lines.filter(line => !line.startsWith('['));
+        const pathExists = withoutLog.filter(line => fs.existsSync(line));
+        pathExists.length > 0
+            ? resolve(pathExists.at(-1)!)
+            : reject(new Error(`Couldn't find a valid path in sbt output: ${fullOutput}`));
       }
     });
   });
